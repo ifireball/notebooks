@@ -1,0 +1,6 @@
+[MASTER]
+
+[MESSAGE CONTROL]
+disable=\
+    too-few-public-methods,
+

@@ -11,6 +11,10 @@ orjson = "*"
 jupyterlab-git = "*"
 jupyterlab-lsp = "*"
 python-lsp-server = {extras = ["all"], version = "*"}
+pylsp-mypy = "*"
+python-lsp-black = "*"
+pyls-isort = "*"
+jupyterlab-code-formatter = "*"
 
 [dev-packages]
 
