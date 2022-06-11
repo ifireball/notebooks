@@ -15,6 +15,9 @@ pylsp-mypy = "*"
 python-lsp-black = "*"
 pyls-isort = "*"
 jupyterlab-code-formatter = "*"
+panel = "*"
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
 
 [dev-packages]
 
