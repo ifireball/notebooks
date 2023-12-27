@@ -1779,11 +1779,12 @@
         },
         "starlette": {
             "hashes": [
-                "sha256:5a60c5c2d051f3a8eb546136aa0c9399773a689595e099e0877704d5888279bf",
-                "sha256:c6d21096774ecb9639acad41b86b7706e52ba3bf1dc13ea4ed9ad593d47e24c7"
+                "sha256:6a6b0d042acb8d469a01eba54e9cda6cbd24ac602c4cd016723117d6a7e73b75",
+                "sha256:918416370e846586541235ccd38a474c08b80443ed31c578a418e2209b3eef91"
             ],
-            "markers": "python_version >= '3.6'",
-            "version": "==0.19.1"
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==0.27.0"
         },
         "terminado": {
             "hashes": [
