@@ -1,0 +1,170 @@
+{
+  // =============================================================================
+  // Dev Container Configuration for Python Notebooks Development
+  // =============================================================================
+  // This configuration sets up a complete Python development environment using:
+  // - uv for fast Python package management (compiled from source for security)
+  // - Jupyter Lab for notebook development
+  // - FastAPI/uvicorn for web service development
+  // - Comprehensive linting and formatting tools
+
+  "name": "Notebooks Dev Container",
+  
+  // Build configuration
+  "build": {
+    "dockerfile": "Containerfile",
+    "context": ".."  // Build context includes the workspace for copying files
+  },
+  
+  // VS Code specific customizations
+  "customizations": {
+    "vscode": {
+      // Extensions installed automatically in the container
+      // CORE: Python support and Jupyter notebook functionality
+      // FORMATTING: Black (code formatting), isort (import sorting), Ruff (fast linting)
+      // TYPING: MyPy type checking
+      // PRODUCTIVITY: YAML/JSON support for config files
+      "extensions": [
+        "ms-python.python",                          // Core Python support
+        "ms-python.black-formatter",                 // Black code formatter
+        "ms-python.isort",                          // Import sorting
+        "ms-python.mypy-type-checker",              // Static type checking
+        "ms-toolsai.jupyter",                       // Core Jupyter support
+        "ms-toolsai.vscode-jupyter-cell-tags",      // Jupyter cell tagging
+        "ms-toolsai.vscode-jupyter-slideshow",      // Jupyter slideshow
+        "ms-toolsai.jupyter-keymap",                // Jupyter keyboard shortcuts
+        "ms-toolsai.jupyter-renderers",             // Enhanced rendering
+        "charliermarsh.ruff",                       // Fast Python linter
+        "redhat.vscode-yaml",                       // YAML language support
+        "ms-vscode.vscode-json",                    // JSON language support
+        "tamasfe.even-better-toml"                  // TOML language support
+      ],
+      
+      // VS Code settings for optimal Python development
+      "settings": {
+        // =============================================================================
+        // Python Configuration
+        // =============================================================================
+        // DECISION: Use uv-managed virtual environment for all Python operations
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.terminal.activateEnvInCurrentTerminal": true,
+        
+        // =============================================================================
+        // Jupyter Configuration
+        // =============================================================================
+        // DECISION: Filter kernels to only show our project environment
+        // This prevents confusion with system Python or other environments
+        // NOTE: VS Code auto-detects and creates Jupyter kernels when opening .ipynb files
+        // Manual kernel setup in setup.sh is mainly for direct Jupyter Lab usage
+        "jupyter.kernels.filter": [
+          {
+            "path": "/workspace/.venv/bin/python",
+            "type": "pythonEnvironment"
+          }
+        ],
+        
+        // =============================================================================
+        // Code Quality Tools
+        // =============================================================================
+        // DECISION: Use Black for formatting (configured in pyproject.toml)
+        "python.formatting.provider": "black",
+        
+        // DECISION: Enable MyPy for static type checking
+        "python.linting.enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.linting.mypyPath": "/workspace/.venv/bin/mypy",
+        
+        // DECISION: Use isort for import organization
+        "python.sortImports.path": "/workspace/.venv/bin/isort",
+        
+        // =============================================================================
+        // Terminal Configuration
+        // =============================================================================
+        // DECISION: Use bash with login shell to ensure environment setup
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash",
+            "args": ["-l"]  // Login shell loads .bashrc with our environment
+          }
+        }
+      }
+    }
+  },
+  
+  // =============================================================================
+  // Port Forwarding
+  // =============================================================================
+  // DECISION: Forward common development ports
+  // 8888: Jupyter Lab default port
+  // 8000: FastAPI development server default
+  // 42435: Custom port used in notebook examples
+  "forwardPorts": [8888, 8000, 42435],
+  
+  // =============================================================================
+  // Container Lifecycle
+  // =============================================================================
+  // DECISION: Run setup script after container creation to:
+  // - Install project dependencies with uv
+  // - Set up Jupyter kernel for the project
+  // - Configure development tools
+  "postCreateCommand": "chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh",
+  
+  // =============================================================================
+  // Security and User Configuration
+  // =============================================================================
+  // DECISION: Use non-root user for security best practices
+  "remoteUser": "vscode",
+  
+  // BUILT-IN: Automatically update container user UID/GID to match host user
+  // This is the official dev container way to handle file permissions with bind mounts
+  "updateRemoteUserUID": true,
+  
+  // DECISION: Mount workspace to /workspace for consistency
+  "workspaceFolder": "/workspace",
+  
+
+
+  // =============================================================================
+  // Container Runtime Configuration  
+  // =============================================================================
+  // Support for both Docker and Podman container runtimes
+  "runArgs": [
+    // Podman-specific: Enable user namespace mapping for proper file permissions
+    // CRITICAL: Required for Podman even when using updateRemoteUserUID
+    "--userns=keep-id",
+    // Security: Disable SELinux labels for easier development (works with both Docker and Podman)
+    "--security-opt", "label=disable"
+  ],
+
+  // =============================================================================
+  // Git Configuration  
+  // =============================================================================
+  // Copy git config from host global config to workspace local config
+  "initializeCommand": ".devcontainer/init-git-env.sh",
+
+  // Pass host locale settings to container for proper git/tool functionality
+  "containerEnv": {
+    "LANG": "${localEnv:LANG:en_US.UTF-8}",
+    "LC_ALL": "${localEnv:LC_ALL}",
+    "LC_CTYPE": "${localEnv:LC_CTYPE}",
+    "LC_NUMERIC": "${localEnv:LC_NUMERIC}",
+    "LC_TIME": "${localEnv:LC_TIME}",
+    "LC_COLLATE": "${localEnv:LC_COLLATE}",
+    "LC_MONETARY": "${localEnv:LC_MONETARY}",
+    "LC_MESSAGES": "${localEnv:LC_MESSAGES}",
+    "LC_PAPER": "${localEnv:LC_PAPER}",
+    "LC_NAME": "${localEnv:LC_NAME}",
+    "LC_ADDRESS": "${localEnv:LC_ADDRESS}",
+    "LC_TELEPHONE": "${localEnv:LC_TELEPHONE}",
+    "LC_MEASUREMENT": "${localEnv:LC_MEASUREMENT}",
+    "LC_IDENTIFICATION": "${localEnv:LC_IDENTIFICATION}"
+  },
+
+  // DECISION: Use bind mount with cached consistency for better performance
+  // on macOS and Windows while maintaining file sync
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ]
+} 

@@ -1,0 +1,132 @@
+# Multi-stage Containerfile for Python development environment
+# 
+# DESIGN DECISIONS:
+# 1. Multi-stage build to compile uv from source (security requirement - no untrusted binaries)
+# 2. Use stable/pinned image tags instead of 'latest' for reproducible builds
+# 3. Use Fedora 42 to match host system (will switch to quay.io/fedora when images available)
+# 4. Manual Python installation (will switch to dedicated Python image when quay.io/fedora/python-312:42 available)
+# 5. Fixed tags for reproducible builds
+
+# =============================================================================
+# Stage 1: Build uv from source using Rust
+# =============================================================================
+# Using stable Fedora 42 release (will switch to quay.io when images become available)
+FROM registry.fedoraproject.org/fedora:42 AS uv-builder
+
+# Install Rust toolchain and build dependencies for compiling uv
+# We need: rust/cargo (toolchain), git (source), gcc (linker), openssl-devel (crypto)
+RUN dnf install -y git rust cargo gcc openssl-devel && \
+    dnf clean all
+
+# Clone and build uv from source
+# SECURITY: Building from source ensures no untrusted binaries per user requirement
+# STABILITY: Pinning to v0.5.9 instead of 'main' for reproducible builds
+RUN git clone https://github.com/astral-sh/uv.git /tmp/uv && \
+    cd /tmp/uv && \
+    git checkout 0.5.9 && \
+    cargo build --release
+
+# =============================================================================
+# Stage 2: Runtime environment with Python 3.12
+# =============================================================================
+# Using Fedora 42 base image (will switch to dedicated Python image when available on quay.io)
+# CONSISTENCY: Matching host system Fedora 42 version
+# NOTE: Once quay.io/fedora/python-312:42 becomes available, we can switch back to pre-built Python image
+FROM registry.fedoraproject.org/fedora:42
+
+# Install Python 3.12 and system dependencies
+# Python: python3.12 and pip for package management
+# Core tools: git (version control), curl/wget (downloads), which (PATH lookup), sudo (elevation)
+# Development tools: bash-completion (shell UX), nodejs/npm (Jupyter extensions), build tools
+# Python compilation deps: gcc/make (C extensions), various -devel packages (headers for common libs)
+# Locale: glibc-all-langpacks for comprehensive locale support (matches host locale)
+RUN dnf install -y \
+    python3.12 \
+    python3.12-devel \
+    python3-pip \
+    git \
+    curl \
+    wget \
+    which \
+    sudo \
+    bash-completion \
+    nodejs \
+    nodejs-npm \
+    gcc \
+    gcc-c++ \
+    make \
+    openssl-devel \
+    libffi-devel \
+    zlib-ng-compat-devel \
+    bzip2-devel \
+    readline-devel \
+    sqlite-devel \
+    xz-devel \
+    tk-devel \
+    glibc-all-langpacks \
+    && dnf clean all
+
+# Create symbolic links for common Python commands to ensure compatibility
+# This ensures 'python' and 'python3' commands work as expected
+RUN ln -sf /usr/bin/python3.12 /usr/local/bin/python && \
+    ln -sf /usr/bin/python3.12 /usr/local/bin/python3
+
+# Copy compiled uv binary from builder stage
+# This is the only artifact we need from the build stage
+COPY --from=uv-builder /tmp/uv/target/release/uv /usr/local/bin/uv
+
+# =============================================================================
+# User Setup
+# =============================================================================
+# Create non-root user for security best practices
+# SECURITY: Running as non-root reduces attack surface
+# COMPATIBILITY: 'vscode' user matches VS Code dev container expectations
+
+# Use standard dev container build arguments (automatically passed by VS Code)
+ARG REMOTE_USER_UID=1000
+ARG REMOTE_USER_GID=$REMOTE_USER_UID
+
+# Create group and user with correct UID/GID from the start
+# CRITICAL: Using VS Code's standard build args ensures proper file permissions
+RUN groupadd --gid $REMOTE_USER_GID vscode && \
+    useradd --uid $REMOTE_USER_UID --gid $REMOTE_USER_GID -m -s /bin/bash vscode && \
+    echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set up working directory (mounted workspace)
+WORKDIR /workspace
+
+# Ensure vscode user owns the workspace
+RUN chown -R vscode:vscode /workspace
+
+# Switch to non-root user for remainder of setup
+USER vscode
+
+# =============================================================================
+# Environment Configuration
+# =============================================================================
+# Configure shell environment and create necessary directories
+# UV_PYTHON_PREFERENCE=only-managed: Force uv to use its managed Python installations
+# UV_PROJECT_ENVIRONMENT: Pin virtual environment location to workspace
+# Auto-activation: Source venv if it exists (for convenience in terminals)
+RUN echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc && \
+    echo 'export PYTHONPATH="/workspace:$PYTHONPATH"' >> ~/.bashrc && \
+    echo 'export UV_PYTHON_PREFERENCE=only-managed' >> ~/.bashrc && \
+    echo 'export UV_PROJECT_ENVIRONMENT=/workspace/.venv' >> ~/.bashrc && \
+    echo 'if [ -f /workspace/.venv/bin/activate ]; then source /workspace/.venv/bin/activate; fi' >> ~/.bashrc && \
+    mkdir -p ~/.local/share/jupyter/kernels
+
+# Verify uv installation works
+RUN uv --version
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+# Set container-wide environment variables for consistency
+ENV PYTHON_VERSION=3.12
+ENV PATH="/usr/local/bin:$PATH"
+ENV PYTHONPATH="/workspace:$PYTHONPATH"
+ENV UV_PYTHON_PREFERENCE=only-managed
+ENV UV_PROJECT_ENVIRONMENT=/workspace/.venv
+
+# Default command when container starts
+CMD ["/bin/bash"] 

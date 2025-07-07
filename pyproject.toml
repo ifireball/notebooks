@@ -1,0 +1,181 @@
+# =============================================================================
+# Python Project Configuration
+# =============================================================================
+# This file replaces Pipfile for use with uv package manager.
+# 
+# MIGRATION DECISIONS:
+# - Moved from Pipfile to pyproject.toml for better tool standardization
+# - Added comprehensive development dependencies for code quality
+# - Configured all development tools (black, isort, mypy, ruff, pytest)
+# - Maintained all original dependencies from Pipfile
+
+[project]
+name = "notebooks"
+version = "0.1.0"
+description = "Jupyter notebooks development environment"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+# Core project dependencies (migrated from Pipfile)
+dependencies = [
+    # Jupyter ecosystem
+    "jupyterlab",
+    "ipywidgets",
+    "ipycanvas",
+    
+    # Data handling
+    "orjson",
+    
+    # Development environment tools
+    "jupyterlab-git",
+    "jupyterlab-lsp",
+    "python-lsp-server[all]",
+    "pylsp-mypy",
+    "python-lsp-black",
+    "pyls-isort",
+    "jupyterlab-code-formatter",
+    
+    # Web framework components (from your examples)
+    "panel",
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+# Explicitly specify packages to avoid setuptools auto-discovery issues
+[tool.setuptools]
+packages = ["ball_screen", "otel_test", "sshow_tools"]
+
+# Optional development dependencies
+[project.optional-dependencies]
+dev = [
+    "pytest", # Testing framework
+    "pytest-cov", # Coverage reporting
+    "black", # Code formatting
+    "isort", # Import sorting
+    "mypy", # Static type checking
+    "ruff", # Git hooks for code quality
+]
+
+# Build system configuration
+# DECISION: Use setuptools build backend (standard and compatible)
+# NOTE: uv_build doesn't exist yet - see https://github.com/astral-sh/uv/issues/3957
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# =============================================================================
+# uv Package Manager Configuration
+# =============================================================================
+# Development dependencies with version constraints for stability
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0",      # Modern pytest features
+    "pytest-cov>=4.0",  # Recent coverage features
+    "black>=23.0",      # Stable formatting
+    "isort>=5.0",       # Modern import handling
+    "mypy>=1.0",        # Full type checking support
+    "ruff>=0.1",        # Fast and comprehensive linting
+]
+
+# =============================================================================
+# Code Formatting Configuration
+# =============================================================================
+
+[tool.black]
+# DECISION: Use 88 character line length (black's default, more readable than 79)
+line-length = 88
+target-version = ['py310']  # Target Python 3.10+ syntax
+include = '\.pyi?$'         # Format .py and .pyi files
+
+# Exclude common build/cache directories
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+# DECISION: Use "black" profile for compatibility with Black formatter
+profile = "black"
+multi_line_output = 3  # Vertical hanging indent style
+line_length = 88       # Match Black's line length
+
+# DECISION: Define first-party modules based on your project structure
+known_first_party = ["notebooks", "ball_screen", "otel_test", "sshow_tools"]
+
+# =============================================================================
+# Static Type Checking Configuration (MyPy)
+# =============================================================================
+[tool.mypy]
+python_version = "3.10"
+
+# DECISION: Enable comprehensive type checking for better code quality
+# These settings enforce strict typing practices while being practical
+warn_return_any = true              # Warn when returning Any type
+warn_unused_configs = true          # Warn about unused config options
+disallow_untyped_defs = true       # Require type annotations on functions
+disallow_incomplete_defs = true    # Disallow partial type annotations
+check_untyped_defs = true          # Check untyped function bodies
+disallow_untyped_decorators = true # Require typed decorators
+no_implicit_optional = true        # Require explicit Optional[] for None defaults
+warn_redundant_casts = true        # Warn about unnecessary type casts
+warn_unused_ignores = true         # Warn about unused # type: ignore
+warn_no_return = true              # Warn about functions that don't return
+warn_unreachable = true            # Warn about unreachable code
+strict_equality = true             # Use strict equality checks
+
+# =============================================================================
+# Linting Configuration (Ruff)
+# =============================================================================
+[tool.ruff]
+# DECISION: Match Black's line length for consistency
+line-length = 88
+target-version = "py310"
+
+# DECISION: Enable comprehensive but practical rule set
+# Focus on errors, style, and modern Python practices
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings  
+    "F",  # pyflakes (unused imports, undefined names)
+    "I",  # isort (import organization)
+    "B",  # flake8-bugbear (common bugs)
+    "C4", # flake8-comprehensions (list/dict comprehension improvements)
+    "UP", # pyupgrade (modern Python syntax)
+]
+
+# DECISION: Ignore rules that conflict with our setup or are overly strict
+ignore = [
+    "E501",  # line too long - handled by Black
+    "B008",  # function calls in defaults - common in FastAPI
+    "C901",  # complexity - handle case by case
+]
+
+# File-specific rule exceptions
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py files
+
+# =============================================================================
+# Testing Configuration (Pytest)
+# =============================================================================
+[tool.pytest.ini_options]
+# DECISION: Standard test discovery patterns and coverage reporting
+testpaths = ["tests"]                           # Look for tests in tests/ directory
+python_files = ["test_*.py", "*_test.py"]      # Test file patterns
+python_classes = ["Test*"]                     # Test class patterns  
+python_functions = ["test_*"]                  # Test function patterns
+
+# DECISION: Generate both HTML and terminal coverage reports
+# HTML for detailed analysis, terminal for quick feedback
+addopts = "--cov=notebooks --cov-report=html --cov-report=term-missing" 
