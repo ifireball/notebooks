@@ -112,7 +112,6 @@ RUN echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc && \
     echo 'export PYTHONPATH="/workspace:$PYTHONPATH"' >> ~/.bashrc && \
     echo 'export UV_PYTHON_PREFERENCE=only-managed' >> ~/.bashrc && \
     echo 'export UV_PROJECT_ENVIRONMENT=/workspace/.venv' >> ~/.bashrc && \
-    echo 'if [ -f /workspace/.venv/bin/activate ]; then source /workspace/.venv/bin/activate; fi' >> ~/.bashrc && \
     mkdir -p ~/.local/share/jupyter/kernels
 
 # Verify uv installation works
