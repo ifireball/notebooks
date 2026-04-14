@@ -1,10 +1,10 @@
 from collections import Counter
-from typing import Mapping
+from collections.abc import Mapping
 
 from fastapi import FastAPI
 
 app = FastAPI()
-counter = Counter()
+counter: Counter[str] = Counter()
 
 
 @app.get("/{counter_name}")

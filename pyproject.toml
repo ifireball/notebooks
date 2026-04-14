@@ -70,8 +70,8 @@ build-backend = "setuptools.build_meta"
 # uv Package Manager Configuration
 # =============================================================================
 # Development dependencies with version constraints for stability
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=7.0",      # Modern pytest features
     "pytest-cov>=4.0",  # Recent coverage features
     "black>=23.0",      # Stable formatting
@@ -143,6 +143,7 @@ strict_equality = true             # Use strict equality checks
 line-length = 88
 target-version = "py310"
 
+[tool.ruff.lint]
 # DECISION: Enable comprehensive but practical rule set
 # Focus on errors, style, and modern Python practices
 select = [
@@ -163,7 +164,7 @@ ignore = [
 ]
 
 # File-specific rule exceptions
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # Allow unused imports in __init__.py files
 
 # =============================================================================

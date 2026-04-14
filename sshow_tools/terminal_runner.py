@@ -1,12 +1,13 @@
-from subprocess import Popen, PIPE, DEVNULL
-from selectors import DefaultSelector, EVENT_READ
-from threading import Thread
 import os
+from selectors import EVENT_READ, DefaultSelector
+from subprocess import DEVNULL, PIPE, Popen
+from threading import Thread
+from typing import Any
 
 import panel
-import panel.widgets
-import panel.viewable
 import panel.pane
+import panel.viewable
+import panel.widgets
 
 
 class TerminalRunner(panel.viewable.Viewer):
@@ -28,14 +29,14 @@ class TerminalRunner(panel.viewable.Viewer):
             height=70,
             margin=(5, 10, 0, 10),
         )
-        self._process = None
-        self._thread = None
+        self._process: Popen[Any] | None = None
+        self._thread: Thread | None = None
         self._args = args
 
         self._run_btn = panel.widgets.Button(
-            name=self.PLAY_LABEL, 
-            width=30, 
-            height=30, 
+            name=self.PLAY_LABEL,
+            width=30,
+            height=30,
             sizing_mode="fixed",
             margin=(5, 10, 5, 5),
         )
@@ -43,7 +44,7 @@ class TerminalRunner(panel.viewable.Viewer):
         self._panel = panel.Column(
             panel.Row(
                 panel.pane.Markdown(
-                    f"```bash\n{args}\n```", 
+                    f"```bash\n{args}\n```",
                     sizing_mode="stretch_both",
                     margin=10,
                 ),
@@ -52,14 +53,14 @@ class TerminalRunner(panel.viewable.Viewer):
                 background="#f8f8f8",
                 # style={"border": "1px solid #f0f0f0"},
                 margin=(0, 25, 0, 10),
-            ), 
+            ),
             self._terminal,
             width=160,
             height=80,
             sizing_mode="scale_both"
         )
 
-    def _on_btn_click(self, event):
+    def _on_btn_click(self, event: Any) -> None:
         if self._thread:
             if self._process:
                 self._process.terminate()
@@ -67,7 +68,7 @@ class TerminalRunner(panel.viewable.Viewer):
             self._thread = Thread(target=self._stream_proc_to_output)
             self._thread.start()
 
-    def __panel__(self):
+    def __panel__(self) -> panel.Column:
         return self._panel
 
     def _stream_proc_to_output(self) -> None:
@@ -91,13 +92,14 @@ class TerminalRunner(panel.viewable.Viewer):
                         selector.register(self._process.stderr, EVENT_READ)
                     while selector.get_map():
                         ready = selector.select()
-                        for key, events in ready:
+                        for key, _events in ready:
                             buf = os.read(key.fd, 10)
                             if buf:
                                 self._terminal.write(buf.decode())
                             else:
                                 selector.unregister(key.fileobj)
-                                key.fileobj.close()
+                                if hasattr(key.fileobj, "close"):
+                                    key.fileobj.close()
         finally:
             self._terminal.write("\033[31;1mTerminated\033[0m\n")
             self._process = None
