@@ -55,7 +55,7 @@ def display_ball_animation(
     canvas = RoughCanvas(width=width, height=height)
     screen = _CanvasBallScreen(width, height, canvas, stop_event)
 
-    def start_thread(*_):
+    def start_thread(*_: object) -> None:
         nonlocal thread
         print("Starting thread")
         thread = Thread(target=anim_func, kwargs={"screen": screen})
@@ -63,10 +63,11 @@ def display_ball_animation(
         start_btn.disabled = True
         stop_btn.disabled = False
 
-    def stop_thread(*_):
+    def stop_thread(*_: object) -> None:
         nonlocal thread
         stop_event.set()
-        thread.join()
+        if thread is not None:
+            thread.join()
         print("Thread stopped")
         thread = None
         stop_event.clear()

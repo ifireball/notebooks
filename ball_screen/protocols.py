@@ -1,6 +1,6 @@
 """Protocols for bouncing ball displays."""
-from typing import Protocol, runtime_checkable
 from abc import abstractmethod
+from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
