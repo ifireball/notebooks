@@ -63,7 +63,7 @@ dev = [
 # DECISION: Use setuptools build backend (standard and compatible)
 # NOTE: uv_build doesn't exist yet - see https://github.com/astral-sh/uv/issues/3957
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=83.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 # =============================================================================
